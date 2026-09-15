@@ -35,6 +35,10 @@ class Config(BaseSettings):
     # Agregacoes com menos registros que isso sao suprimidas para nao permitir reidentificacao.
     k_anonimato: int = 5
 
+    # Os ultimos dias da serie sempre estao incompletos por atraso de digitacao da ficha.
+    # Ancorar a janela alguns dias atras evita ler esse atraso como queda de casos.
+    atraso_notificacao_dias: int = 5
+
     dir_dados: Path = RAIZ / "data"
     dir_relatorios: Path = RAIZ / "reports"
     dir_logs: Path = RAIZ / "logs"
