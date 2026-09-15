@@ -1,0 +1,130 @@
+// Diagrama conceitual da solucao. Gere o PDF com:  python -m srag.cli diagrama
+digraph arquitetura {
+    rankdir=TB;
+    compound=true;
+    splines=true;
+    concentrate=false;
+    nodesep=0.45;
+    ranksep=0.55;
+    fontname="Helvetica";
+    labelloc="t";
+    label=<<b>Agente de relatórios de SRAG — arquitetura da solução</b><br/><font point-size="10">Indicium HealthCare · prova de conceito</font><br/> >;
+    fontsize=17;
+
+    node [fontname="Helvetica", fontsize=10, shape=box, style="rounded,filled",
+          fillcolor="#ffffff", color="#b9c6d4"];
+    edge [fontname="Helvetica", fontsize=9, color="#52606d"];
+
+    // Guardrails aparecem sempre neste estilo, encostados no ponto onde atuam.
+    node [group=""];
+
+    // ---------------------------------------------------------------- interface
+    subgraph cluster_interface {
+        label="Interface do usuário";
+        style="rounded,filled"; color="#e8f0f7"; fontcolor="#1f4e79"; fontsize=11;
+        web [label="Interface web\nHTML · CSS · JS"];
+        cli [label="CLI\ntyper"];
+        api [label="API REST\nFastAPI"];
+        web -> api [label="HTTP"];
+    }
+
+    g_entrada [label="GUARDRAIL\nvalidação do pedido\nallowlist de parâmetros · escopo SRAG\ntriagem de injeção na observação",
+               shape=note, fillcolor="#fdf0e6", color="#c2540a", fontcolor="#7a3706", fontsize=9];
+
+    // ---------------------------------------------------------------- agente
+    subgraph cluster_agente {
+        label="Agente orquestrador — LangGraph";
+        style="rounded,filled"; color="#e8f0f7"; fontcolor="#1f4e79"; fontsize=11;
+
+        n1 [label="1 · coletar_metricas", group=fluxo];
+        n2 [label="2 · gerar_graficos", group=fluxo];
+        n3 [label="3 · buscar_noticias", group=fluxo];
+        n4 [label="4 · indexar_noticias", group=fluxo];
+        n5 [label="5 · planejar_buscas", group=fluxo, fillcolor="#fff6e5"];
+        n6 [label="6 · recuperar_contexto", group=fluxo];
+        n7 [label="7 · redigir_analise", group=fluxo, fillcolor="#fff6e5"];
+        n8 [label="8 · verificar_saida", group=fluxo];
+        n9 [label="9 · montar_relatorio", group=fluxo];
+
+        n1 -> n2 -> n3 -> n4 -> n5 -> n6 -> n7 -> n8 -> n9;
+        n8 -> n7 [label="reprovado\n(até 2 tentativas)", style=dashed, constraint=false];
+
+        g_injecao [label="GUARDRAIL\ntriagem de injeção\nno conteúdo das notícias",
+                   shape=note, fillcolor="#fdf0e6", color="#c2540a", fontcolor="#7a3706",
+                   fontsize=9];
+        g_saida [label="GUARDRAIL\nnúmeros conferidos contra as métricas ·\ncitações resolvidas · dados pessoais ·\nconduta clínica",
+                 shape=note, fillcolor="#fdf0e6", color="#c2540a", fontcolor="#7a3706",
+                 fontsize=9];
+
+        n3 -> g_injecao [style=dashed, color="#c2540a", arrowhead=none, constraint=false];
+        n8 -> g_saida [style=dashed, color="#c2540a", arrowhead=none, constraint=false];
+        { rank=same; n3; g_injecao; }
+        { rank=same; n8; g_saida; }
+    }
+
+    // ---------------------------------------------------------------- ferramentas
+    subgraph cluster_ferramentas {
+        label="Ferramentas do agente";
+        style="rounded,filled"; color="#eef3f8"; fontcolor="#1f4e79"; fontsize=11;
+        t_metricas [label="Consulta de indicadores\nSQL parametrizado, escrito à mão"];
+        t_grafico  [label="Geração de gráficos\nmatplotlib"];
+        t_noticias [label="Coleta de notícias\nRSS + extração de texto"];
+        t_rag      [label="Indexação e recuperação\nchunking · embeddings · similaridade"];
+    }
+
+    n1 -> t_metricas [style=dotted, arrowhead=open];
+    n2 -> t_grafico  [style=dotted, arrowhead=open];
+    n3 -> t_noticias [style=dotted, arrowhead=open];
+    n4 -> t_rag      [style=dotted, arrowhead=open];
+    n6 -> t_rag      [style=dotted, arrowhead=open];
+
+    // ---------------------------------------------------------------- dados
+    subgraph cluster_dados {
+        label="PostgreSQL 16 + pgvector";
+        style="rounded,filled"; color="#eaf2ea"; fontcolor="#2f7a4d"; fontsize=11;
+        d_fato  [label="srag.internacao\nmicrodados tratados,\nsem identificadores", shape=cylinder];
+        d_vetor [label="srag.noticia\nsrag.noticia_trecho\nembeddings vector(768)", shape=cylinder];
+        d_audit [label="srag.execucao\nsrag.auditoria\ntrilha de decisões", shape=cylinder];
+    }
+
+    g_sql [label="GUARDRAIL\npapel srag_leitura: só SELECT\nsem text-to-SQL · timeout de consulta",
+           shape=note, fillcolor="#fdf0e6", color="#c2540a", fontcolor="#7a3706", fontsize=9];
+
+    t_metricas -> g_sql [style=dashed, color="#c2540a", arrowhead=none];
+    g_sql -> d_fato [label="SELECT"];
+    t_rag -> d_vetor [label="grava trechos e\nbusca por similaridade"];
+
+    // ---------------------------------------------------------------- externos
+    subgraph cluster_externo {
+        label="Fontes externas";
+        style="rounded,filled"; color="#f4f4f6"; fontcolor="#52606d"; fontsize=11;
+        datasus [label="Open DATASUS\nSIVEP-Gripe · CSV", shape=folder];
+        rss     [label="Bing News RSS\nGoogle News RSS", shape=folder];
+        gemini  [label="Google Gemini\nLLM + embeddings", shape=component];
+    }
+
+    g_custo [label="GUARDRAIL\nteto de chamadas e de tokens\npor execução",
+             shape=note, fillcolor="#fdf0e6", color="#c2540a", fontcolor="#7a3706", fontsize=9];
+
+    ingestao [label="Ingestão\ndownload · normalização de domínios ·\nminimização de dados pessoais"];
+    saida [label="Relatório\nindicadores · gráficos · comentários com citação ·\napêndice de rastreabilidade\n(Markdown · HTML · PDF)", shape=note];
+
+    // ---------------------------------------------------------------- ligacoes
+    cli -> n1 [lhead=cluster_agente, label="gera relatório"];
+    api -> g_entrada [style=dashed, color="#c2540a", arrowhead=none];
+    g_entrada -> n1 [lhead=cluster_agente];
+
+    datasus -> ingestao [label="CSV ~300 MB"];
+    ingestao -> d_fato [label="COPY em blocos"];
+
+    t_noticias -> rss [label="HTTP"];
+    t_rag -> gemini [label="embeddings"];
+    n5 -> gemini [label="plano de busca", constraint=false];
+    n7 -> gemini [label="redação", constraint=false];
+    gemini -> g_custo [style=dashed, color="#c2540a", arrowhead=none];
+
+    n9 -> saida [label="publica"];
+    n9 -> d_audit [label="registra cada etapa, cada chamada\nao modelo e cada guardrail acionado",
+                   style=dotted, ltail=cluster_agente];
+
+}

@@ -77,5 +77,23 @@ def metricas(
         )
 
 
+@app.command()
+def diagrama(
+    origem: str = typer.Option("docs/arquitetura.dot", "--origem"),
+    destino: str = typer.Option("docs/arquitetura.pdf", "--destino"),
+) -> None:
+    """Renderiza o diagrama de arquitetura em PDF (precisa do graphviz instalado)."""
+    import shutil
+    import subprocess
+
+    if not shutil.which("dot"):
+        raise typer.BadParameter("graphviz nao encontrado; rode este comando dentro do container")
+
+    subprocess.run(["dot", "-Tpdf", origem, "-o", destino], check=True)
+    subprocess.run(["dot", "-Tpng", "-Gdpi=140", origem, "-o", destino.replace(".pdf", ".png")],
+                   check=True)
+    typer.echo(f"diagrama gerado em {destino}")
+
+
 if __name__ == "__main__":
     app()
