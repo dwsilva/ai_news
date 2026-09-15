@@ -1,6 +1,8 @@
 """Aplicacao FastAPI: serve a API e a interface estatica."""
 
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
@@ -16,6 +18,18 @@ logger = logging.getLogger(__name__)
 
 configurar_logging()
 
+
+@asynccontextmanager
+async def ciclo_de_vida(_: FastAPI) -> AsyncIterator[None]:
+    get_config().preparar_diretorios()
+    try:
+        aplicar_schema()
+    except Exception:
+        # A API sobe mesmo assim: /health mostra o problema e o operador corrige.
+        logger.exception("nao consegui aplicar o schema no boot")
+    yield
+
+
 app = FastAPI(
     title="Relatorios de SRAG",
     version="0.1.0",
@@ -23,18 +37,9 @@ app = FastAPI(
         "Geracao automatizada de relatorios sobre Sindrome Respiratoria Aguda Grave a partir "
         "dos microdados do SIVEP-Gripe e de noticias coletadas em tempo real."
     ),
+    lifespan=ciclo_de_vida,
 )
 app.include_router(router)
-
-
-@app.on_event("startup")
-def preparar() -> None:
-    get_config().preparar_diretorios()
-    try:
-        aplicar_schema()
-    except Exception:
-        # A API sobe mesmo assim: /health mostra o problema e o operador corrige.
-        logger.exception("nao consegui aplicar o schema no boot")
 
 
 @app.get("/health")
