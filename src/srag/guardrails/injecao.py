@@ -16,8 +16,11 @@ PADROES = [
     (r"ignore (all |any )?(previous|prior|above) instructions", "pedido para ignorar instrucoes"),
     (r"disregard (the |all )?(previous|above|prior)", "pedido para desconsiderar contexto"),
     (r"esque[cç]a (tudo|as instru[cç][oõ]es|o que)", "pedido para esquecer o contexto"),
-    (r"\b(voc[eê]|you) (agora )?(e|é|are now|is now)\s+(um|uma|a|an)\b.{0,40}\b(assistente|agente|assistant|model)\b",
-     "tentativa de redefinir o papel do agente"),
+    (
+        r"\b(voc[eê]|you) (agora )?(e|é|are now|is now)\s+(um|uma|a|an)\b"
+        r".{0,40}\b(assistente|agente|assistant|model)\b",
+        "tentativa de redefinir o papel do agente",
+    ),
     (r"</?(system|assistant|user)>", "marcacao de papel de conversa"),
     (r"\[/?(INST|SYSTEM)\]", "marcacao de instrucao de modelo"),
     (r"(responda|reply|answer) (apenas|somente|only) (com|with)", "tentativa de forcar a saida"),

@@ -175,5 +175,25 @@ def trilha(run_id: str) -> list[dict[str, Any]]:
         return [dict(linha._mapping) for linha in conexao.execute(consulta, {"run_id": run_id})]
 
 
+def execucao(run_id: str) -> dict[str, Any] | None:
+    consulta = text(
+        "SELECT run_id, status, criada_em, finalizada_em, parametros, data_referencia, "
+        "relatorio_md, relatorio_html, caminho_pdf, metricas, fontes, guardrails, erro "
+        "FROM srag.execucao WHERE run_id = :run_id"
+    )
+    with engine_escrita().connect() as conexao:
+        linha = conexao.execute(consulta, {"run_id": run_id}).first()
+    return dict(linha._mapping) if linha else None
+
+
+def ultimas_execucoes(limite: int = 20) -> list[dict[str, Any]]:
+    consulta = text(
+        "SELECT run_id, status, criada_em, finalizada_em, parametros, data_referencia "
+        "FROM srag.execucao ORDER BY criada_em DESC LIMIT :limite"
+    )
+    with engine_escrita().connect() as conexao:
+        return [dict(linha._mapping) for linha in conexao.execute(consulta, {"limite": limite})]
+
+
 def caminho_do_jsonl() -> Path:
     return get_config().dir_logs / ARQUIVO_JSONL

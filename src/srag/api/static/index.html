@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Relatórios de SRAG</title>
+  <link rel="stylesheet" href="/static/estilo.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="topo-conteudo">
+      <div>
+        <h1>Vigilância de SRAG</h1>
+        <p class="subtitulo">
+          Relatórios gerados a partir dos microdados do SIVEP-Gripe e de notícias recentes
+        </p>
+      </div>
+      <div id="saude" class="saude" title="Situação do serviço">verificando...</div>
+    </div>
+  </header>
+
+  <main>
+    <section class="cartao" aria-labelledby="titulo-pedido">
+      <h2 id="titulo-pedido">Novo relatório</h2>
+      <form id="formulario" class="formulario">
+        <label>
+          Recorte geográfico
+          <select name="uf" id="uf">
+            <option value="">Brasil (todas as UFs)</option>
+          </select>
+        </label>
+
+        <label>
+          Janela de análise
+          <select name="janela_dias" id="janela">
+            <option value="7">7 dias</option>
+            <option value="14">14 dias</option>
+            <option value="30" selected>30 dias</option>
+            <option value="60">60 dias</option>
+            <option value="90">90 dias</option>
+          </select>
+        </label>
+
+        <label>
+          Classificação final
+          <select name="classificacao_final" id="classificacao">
+            <option value="">Todas</option>
+          </select>
+        </label>
+
+        <label class="largura-total">
+          Observação (opcional)
+          <input type="text" name="observacao" id="observacao" maxlength="300"
+                 placeholder="Ex.: dar atenção à situação da UTI em crianças">
+          <small>
+            Só aceita pedidos dentro do escopo de SRAG. O texto passa pela mesma triagem de
+            injeção aplicada às notícias.
+          </small>
+        </label>
+
+        <div class="acoes">
+          <button type="submit" id="gerar">Gerar relatório</button>
+          <a id="ver-metricas" href="/api/metricas" target="_blank" rel="noopener">
+            Ver indicadores brutos (JSON)
+          </a>
+        </div>
+      </form>
+      <p id="erro-formulario" class="erro" hidden></p>
+    </section>
+
+    <section class="cartao" id="painel-execucao" hidden aria-live="polite">
+      <h2>Execução <code id="run-id"></code></h2>
+      <ol id="etapas" class="etapas"></ol>
+    </section>
+
+    <section class="cartao" id="painel-resultado" hidden>
+      <nav class="abas" role="tablist">
+        <button class="aba ativa" data-alvo="aba-relatorio" role="tab">Relatório</button>
+        <button class="aba" data-alvo="aba-guardrails" role="tab">Guardrails</button>
+        <button class="aba" data-alvo="aba-auditoria" role="tab">Trilha de auditoria</button>
+      </nav>
+
+      <div id="aba-relatorio" class="conteudo-aba">
+        <div class="barra-acoes">
+          <a id="baixar-pdf" class="botao-secundario" href="#" target="_blank" rel="noopener">
+            Baixar PDF
+          </a>
+        </div>
+        <iframe id="relatorio" title="Relatório gerado"></iframe>
+      </div>
+
+      <div id="aba-guardrails" class="conteudo-aba" hidden>
+        <table class="tabela">
+          <thead>
+            <tr><th>Guardrail</th><th>Resultado</th><th>Detalhe</th></tr>
+          </thead>
+          <tbody id="lista-guardrails"></tbody>
+        </table>
+      </div>
+
+      <div id="aba-auditoria" class="conteudo-aba" hidden>
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th>#</th><th>Etapa</th><th>Ação</th><th>Situação</th>
+              <th>Duração</th><th>Tokens</th>
+            </tr>
+          </thead>
+          <tbody id="lista-auditoria"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="cartao">
+      <h2>Execuções anteriores</h2>
+      <table class="tabela">
+        <thead>
+          <tr><th>Identificador</th><th>Recorte</th><th>Situação</th><th>Quando</th></tr>
+        </thead>
+        <tbody id="historico"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer>
+    Prova de conceito. Os indicadores são calculados diretamente sobre a base pública do
+    SIVEP-Gripe; o modelo de linguagem apenas redige os comentários e não produz números.
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
