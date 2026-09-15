@@ -125,8 +125,8 @@ def taxa_de_mortalidade(filtro: Filtro, janela: Janela) -> MetricaCalculada:
 
     limitacao = (
         "Óbitos por SRAG sobre os casos já encerrados no período. "
-        f"{linha.sem_desfecho} casos da janela ainda estão sem desfecho registrado e ficam fora "
-        "do denominador, o que tende a subestimar a taxa nos dias mais recentes."
+        f"{_milhar(linha.sem_desfecho)} casos da janela ainda estão sem desfecho registrado e "
+        "ficam fora do denominador, o que tende a subestimar a taxa nos dias mais recentes."
     )
 
     return MetricaCalculada(
@@ -261,6 +261,10 @@ def serie_mensal(filtro: Filtro, referencia: date, meses: int = 12) -> SerieTemp
         titulo=f"Casos mensais de SRAG nos últimos {meses} meses",
         pontos=pontos,
     )
+
+
+def _milhar(valor: int) -> str:
+    return f"{valor:,}".replace(",", ".")
 
 
 def _quebra(rotulo: str, numerador: int, denominador: int) -> Quebra:

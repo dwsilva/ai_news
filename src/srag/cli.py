@@ -43,5 +43,39 @@ def ingestao(
     )
 
 
+@app.command()
+def relatorio(
+    uf: str | None = typer.Option(None, "--uf", help="Sigla da UF; sem isso o recorte e o Brasil."),
+    janela: int = typer.Option(30, "--janela", help="Tamanho da janela de analise, em dias."),
+    observacao: str | None = typer.Option(None, "--observacao", help="Foco adicional da analise."),
+) -> None:
+    """Gera o relatorio completo e grava em reports/<run_id>/."""
+    from srag.servico import gerar
+
+    resultado = gerar(uf=uf, janela_dias=janela, observacao=observacao)
+    typer.echo(f"execucao {resultado.run_id}")
+    for metrica in resultado.painel.metricas:
+        typer.echo(f"  {metrica.nome}: {metrica.formatado()}")
+    typer.echo(f"arquivos em {resultado.pasta}")
+
+
+@app.command()
+def metricas(
+    uf: str | None = typer.Option(None, "--uf"),
+    janela: int = typer.Option(30, "--janela"),
+) -> None:
+    """Mostra so os indicadores, sem acionar o modelo de linguagem."""
+    from srag.metricas.calculos import montar_painel
+    from srag.metricas.modelos import Filtro
+
+    painel = montar_painel(Filtro(uf=uf, janela_dias=janela))
+    typer.echo(f"data de referencia: {painel.data_referencia:%d/%m/%Y}")
+    for metrica in painel.metricas:
+        typer.echo(
+            f"  {metrica.nome}: {metrica.formatado()} "
+            f"({metrica.numerador}/{metrica.denominador})"
+        )
+
+
 if __name__ == "__main__":
     app()
