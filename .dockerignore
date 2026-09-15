@@ -1,0 +1,7 @@
+.git
+.venv
+data/bruto
+reports
+logs
+tests/__pycache__
+**/__pycache__

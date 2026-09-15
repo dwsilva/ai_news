@@ -1,0 +1,20 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+.env
+.env.local
+
+# base bruta do DATASUS: ~1 GB, baixada sob demanda pelo comando de ingestao
+data/bruto/
+data/*.csv
+
+logs/*.jsonl
+reports/*
+!reports/exemplo/
