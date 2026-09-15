@@ -10,8 +10,8 @@ import pandas as pd
 from sqlalchemy import text
 
 from srag.db import engine_escrita
-from srag.ingestao.download import baixar, hash_do_arquivo, resolver_url
 from srag.ingestao.dominios import COLUNAS_ORIGEM
+from srag.ingestao.download import baixar, hash_do_arquivo, resolver_url
 from srag.ingestao.transform import (
     COLUNAS_DESTINO,
     descartar_sem_data_de_sintomas,

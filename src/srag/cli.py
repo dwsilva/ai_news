@@ -9,7 +9,7 @@ import typer
 
 from srag.log import configurar_logging
 
-app = typer.Typer(add_completion=False, help="Relatorios de SRAG a partir do Open DATASUS.")
+app = typer.Typer(add_completion=False, help="Relatórios de SRAG a partir do Open DATASUS.")
 logger = logging.getLogger(__name__)
 
 
@@ -31,7 +31,7 @@ def schema() -> None:
 def ingestao(
     ano: int = typer.Option(..., "--ano", help="Ano-base do arquivo do SIVEP."),
     url: str | None = typer.Option(None, "--url", help="Sobrescreve a URL do CSV."),
-    limite: int | None = typer.Option(None, "--limite", help="Le so as N primeiras linhas."),
+    limite: int | None = typer.Option(None, "--limite", help="Lê apenas as N primeiras linhas."),
 ) -> None:
     """Baixa o CSV do Open DATASUS e carrega no banco."""
     from srag.ingestao.carga import carregar_ano
