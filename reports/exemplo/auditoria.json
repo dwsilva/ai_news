@@ -1,0 +1,439 @@
+{
+    "run_id": "c478c1f88f6440c1",
+    "status": "concluido",
+    "parametros": {
+        "uf": null,
+        "janela_dias": 30,
+        "tem_observacao": false,
+        "data_referencia": null,
+        "classificacao_final": null
+    },
+    "guardrails": [
+        {
+            "detalhe": "UF: Brasil | janela: 30 dias",
+            "aprovado": true,
+            "guardrail": "validacao_do_pedido"
+        },
+        {
+            "detalhe": "nenhum artigo com padrao de injecao",
+            "aprovado": true,
+            "guardrail": "triagem_de_injecao",
+            "recusados": []
+        },
+        {
+            "detalhe": "o percentual 45.0% nao corresponde a nenhuma metrica calculada; o percentual 90.0% nao corresponde a nenhuma metrica calculada; o percentual 2.4% nao corresponde a nenhuma metrica calculada",
+            "aprovado": false,
+            "guardrail": "verificacao_de_saida",
+            "problemas": [
+                "o percentual 45.0% nao corresponde a nenhuma metrica calculada",
+                "o percentual 90.0% nao corresponde a nenhuma metrica calculada",
+                "o percentual 2.4% nao corresponde a nenhuma metrica calculada"
+            ],
+            "tentativa": 1
+        },
+        {
+            "detalhe": "15 numeros conferidos, nenhum problema",
+            "aprovado": true,
+            "guardrail": "verificacao_de_saida",
+            "problemas": [],
+            "tentativa": 2
+        }
+    ],
+    "trilha": [
+        {
+            "sequencia": 1,
+            "ocorrido_em": "2026-09-16T03:01:01.151916Z",
+            "etapa": "guardrail",
+            "acao": "validacao_do_pedido",
+            "status": "ok",
+            "duracao_ms": 0,
+            "parametros": {},
+            "resultado": {
+                "detalhe": "UF: Brasil | janela: 30 dias",
+                "aprovado": true,
+                "guardrail": "validacao_do_pedido"
+            },
+            "modelo": null,
+            "tokens_entrada": null,
+            "tokens_saida": null,
+            "mensagem": "UF: Brasil | janela: 30 dias"
+        },
+        {
+            "sequencia": 2,
+            "ocorrido_em": "2026-09-16T03:01:01.708056Z",
+            "etapa": "metricas",
+            "acao": "consultar_banco",
+            "status": "ok",
+            "duracao_ms": 108,
+            "parametros": {
+                "uf": null,
+                "janela_dias": 30,
+                "data_referencia": null,
+                "classificacao_final": null
+            },
+            "resultado": {
+                "valores": {
+                    "taxa_vacinacao": {
+                        "valor": 39.15067631330607,
+                        "consulta": "SELECT\n    count(*) FILTER (WHERE vacina_covid = 'Sim') AS vacinados,\n    count(*) FILTER (WHERE vacina_covid IN ('Sim', 'N\u00e3o')) AS com_informacao,\n    count(*) FILTER (WHERE vacina_covid = 'Ignorado') AS ignorados\nFROM srag.internacao\nWHERE dt_sintomas BETWEEN :inicio AND :fim\n  \n    AND (CAST(:uf AS text) IS NULL OR uf_notificacao = CAST(:uf AS text))\n    AND (CAST(:classificacao AS text) IS NULL\n         OR classificacao_final = CAST(:classificacao AS text))",
+                        "numerador": 6223,
+                        "parametros": {
+                            "uf": null,
+                            "fim": "2026-09-08",
+                            "inicio": "2026-08-10",
+                            "classificacao": null
+                        },
+                        "denominador": 15895
+                    },
+                    "taxa_mortalidade": {
+                        "valor": 5.279350233817377,
+                        "consulta": "SELECT\n    count(*) FILTER (WHERE evolucao = '\u00d3bito') AS obitos_srag,\n    count(*) FILTER (WHERE evolucao = '\u00d3bito por outras causas') AS obitos_outras_causas,\n    count(*) FILTER (WHERE evolucao IN ('Cura', '\u00d3bito', '\u00d3bito por outras causas'))\n        AS com_desfecho,\n    count(*) FILTER (WHERE evolucao = 'Ignorado') AS sem_desfecho\nFROM srag.internacao\nWHERE dt_sintomas BETWEEN :inicio AND :fim\n  \n    AND (CAST(:uf AS text) IS NULL OR uf_notificacao = CAST(:uf AS text))\n    AND (CAST(:classificacao AS text) IS NULL\n         OR classificacao_final = CAST(:classificacao AS text))",
+                        "numerador": 429,
+                        "parametros": {
+                            "uf": null,
+                            "fim": "2026-09-08",
+                            "inicio": "2026-08-10",
+                            "classificacao": null
+                        },
+                        "denominador": 8126
+                    },
+                    "taxa_ocupacao_uti": {
+                        "valor": 28.283619278137678,
+                        "consulta": "SELECT\n    count(*) FILTER (WHERE uti = 'Sim') AS em_uti,\n    count(*) FILTER (WHERE uti IN ('Sim', 'N\u00e3o')) AS com_informacao,\n    count(*) FILTER (WHERE uti = 'Ignorado') AS ignorados,\n    avg(dias_uti) FILTER (WHERE uti = 'Sim' AND dias_uti IS NOT NULL) AS media_dias_uti\nFROM srag.internacao\nWHERE dt_sintomas BETWEEN :inicio AND :fim\n  \n    AND (CAST(:uf AS text) IS NULL OR uf_notificacao = CAST(:uf AS text))\n    AND (CAST(:classificacao AS text) IS NULL\n         OR classificacao_final = CAST(:classificacao AS text))",
+                        "numerador": 3973,
+                        "parametros": {
+                            "uf": null,
+                            "fim": "2026-09-08",
+                            "inicio": "2026-08-10",
+                            "classificacao": null
+                        },
+                        "denominador": 14047
+                    },
+                    "taxa_aumento_casos": {
+                        "valor": -27.906247199067845,
+                        "consulta": "SELECT\n    count(*) FILTER (WHERE dt_sintomas > :corte)  AS periodo_atual,\n    count(*) FILTER (WHERE dt_sintomas <= :corte) AS periodo_anterior\nFROM srag.internacao\nWHERE dt_sintomas BETWEEN :inicio_anterior AND :fim\n  \n    AND (CAST(:uf AS text) IS NULL OR uf_notificacao = CAST(:uf AS text))\n    AND (CAST(:classificacao AS text) IS NULL\n         OR classificacao_final = CAST(:classificacao AS text))",
+                        "numerador": 16087,
+                        "parametros": {
+                            "uf": null,
+                            "fim": "2026-09-08",
+                            "corte": "2026-08-09",
+                            "classificacao": null,
+                            "inicio_anterior": "2026-07-11"
+                        },
+                        "denominador": 22314
+                    }
+                },
+                "data_referencia": "2026-09-08",
+                "total_registros": 548669
+            },
+            "modelo": null,
+            "tokens_entrada": null,
+            "tokens_saida": null,
+            "mensagem": null
+        },
+        {
+            "sequencia": 3,
+            "ocorrido_em": "2026-09-16T03:01:02.058515Z",
+            "etapa": "graficos",
+            "acao": "gerar_png",
+            "status": "ok",
+            "duracao_ms": 344,
+            "parametros": {
+                "destino": "/app/reports/c478c1f88f6440c1"
+            },
+            "resultado": {
+                "casos_diarios": "/app/reports/c478c1f88f6440c1/casos_diarios.png",
+                "casos_mensais": "/app/reports/c478c1f88f6440c1/casos_mensais.png"
+            },
+            "modelo": null,
+            "tokens_entrada": null,
+            "tokens_saida": null,
+            "mensagem": null
+        },
+        {
+            "sequencia": 4,
+            "ocorrido_em": "2026-09-16T03:01:03.909437Z",
+            "etapa": "noticias",
+            "acao": "buscar_rss",
+            "status": "ok",
+            "duracao_ms": 1845,
+            "parametros": {
+                "uf": null,
+                "maximo": 15,
+                "janela_dias": 30
+            },
+            "resultado": {
+                "aceitos": 15,
+                "consulta": "SRAG / sindrome respiratoria aguda grave / InfoGripe (Brasil)",
+                "veiculos": [
+                    "Brasil 61",
+                    "CNN Brasil",
+                    "ContilNet",
+                    "Folha BV",
+                    "Franc\u00eas News",
+                    "Funda\u00e7\u00e3o Oswaldo Cruz (Fiocruz)",
+                    "Portal Acre",
+                    "agazetadoacre.com",
+                    "agenciabrasil.ebc.com.br",
+                    "eshoje.com.br",
+                    "gcnoticias.com.br",
+                    "midiamax.com.br",
+                    "oliberal.com"
+                ],
+                "recusados": 0,
+                "com_texto_integral": 6
+            },
+            "modelo": null,
+            "tokens_entrada": null,
+            "tokens_saida": null,
+            "mensagem": null
+        },
+        {
+            "sequencia": 5,
+            "ocorrido_em": "2026-09-16T03:01:03.914462Z",
+            "etapa": "guardrail",
+            "acao": "triagem_de_injecao",
+            "status": "ok",
+            "duracao_ms": 0,
+            "parametros": {},
+            "resultado": {
+                "detalhe": "nenhum artigo com padrao de injecao",
+                "aprovado": true,
+                "guardrail": "triagem_de_injecao",
+                "recusados": []
+            },
+            "modelo": null,
+            "tokens_entrada": null,
+            "tokens_saida": null,
+            "mensagem": "nenhum artigo com padrao de injecao"
+        },
+        {
+            "sequencia": 6,
+            "ocorrido_em": "2026-09-16T03:01:11.645812Z",
+            "etapa": "noticias",
+            "acao": "indexar",
+            "status": "ok",
+            "duracao_ms": 7727,
+            "parametros": {
+                "artigos": 15
+            },
+            "resultado": {
+                "trechos": 36
+            },
+            "modelo": null,
+            "tokens_entrada": null,
+            "tokens_saida": null,
+            "mensagem": null
+        },
+        {
+            "sequencia": 7,
+            "ocorrido_em": "2026-09-16T03:01:17.077331Z",
+            "etapa": "llm",
+            "acao": "planejar_buscas",
+            "status": "ok",
+            "duracao_ms": 5425,
+            "parametros": {
+                "modelo": "gemini-3.8-flash"
+            },
+            "resultado": {
+                "tokens_acumulados": 1046,
+                "chamadas_acumuladas": 1
+            },
+            "modelo": "gemini-3.8-flash",
+            "tokens_entrada": 473,
+            "tokens_saida": 573,
+            "mensagem": null
+        },
+        {
+            "sequencia": 8,
+            "ocorrido_em": "2026-09-16T03:01:19.148152Z",
+            "etapa": "noticias",
+            "acao": "recuperar",
+            "status": "ok",
+            "duracao_ms": 2065,
+            "parametros": {
+                "perguntas": {
+                    "taxa_vacinacao": "Qual \u00e9 o cen\u00e1rio atual da cobertura vacinal contra covid-19 no Brasil?",
+                    "taxa_mortalidade": "Qual o panorama recente da mortalidade e gravidade dos casos de SRAG no Brasil?",
+                    "taxa_ocupacao_uti": "Qual a situa\u00e7\u00e3o recente da taxa de ocupa\u00e7\u00e3o de leitos de UTI por SRAG no Brasil?",
+                    "taxa_aumento_casos": "O que explica a queda ou desacelera\u00e7\u00e3o nos casos notificados de SRAG no Brasil?"
+                }
+            },
+            "resultado": {
+                "taxa_vacinacao": [
+                    {
+                        "titulo": "Casos graves de s\u00edndrome respirat\u00f3ria aumentam entre crian\u00e7as de 2 a 4 anos em MT",
+                        "veiculo": "gcnoticias.com.br",
+                        "distancia": 0.3874
+                    },
+                    {
+                        "titulo": "Casos graves de s\u00edndrome respirat\u00f3ria aumentam entre crian\u00e7as de 2 a 4 anos em MT",
+                        "veiculo": "gcnoticias.com.br",
+                        "distancia": 0.3914
+                    },
+                    {
+                        "titulo": "InfoGripe: casos de SRAG seguem em queda no pa\u00eds",
+                        "veiculo": "Brasil 61",
+                        "distancia": 0.3934
+                    }
+                ],
+                "taxa_mortalidade": [
+                    {
+                        "titulo": "Acre registra alta de casos de s\u00edndrome respirat\u00f3ria grave associados ao rinov\u00edrus, aponta Fiocruz",
+                        "veiculo": "agazetadoacre.com",
+                        "distancia": 0.2164
+                    },
+                    {
+                        "titulo": "Acre registra alta de casos de s\u00edndrome respirat\u00f3ria grave associados ao rinov\u00edrus, aponta Fiocruz",
+                        "veiculo": "agazetadoacre.com",
+                        "distancia": 0.2406
+                    },
+                    {
+                        "titulo": "Casos de s\u00edndrome respirat\u00f3ria grave caem 45% no Par\u00e1 nas \u00faltimas semanas, aponta Sespa",
+                        "veiculo": "oliberal.com",
+                        "distancia": 0.2477
+                    }
+                ],
+                "taxa_ocupacao_uti": [
+                    {
+                        "titulo": "Vit\u00f3ria est\u00e1 entre capitais em alerta para casos de S\u00edndrome Respirat\u00f3ria Aguda Grave",
+                        "veiculo": "eshoje.com.br",
+                        "distancia": 0.3107
+                    },
+                    {
+                        "titulo": "Casos de s\u00edndrome respirat\u00f3ria grave caem 45% no Par\u00e1 nas \u00faltimas semanas, aponta Sespa",
+                        "veiculo": "oliberal.com",
+                        "distancia": 0.3286
+                    },
+                    {
+                        "titulo": "InfoGripe: casos de SRAG seguem em queda no pa\u00eds",
+                        "veiculo": "Brasil 61",
+                        "distancia": 0.3305
+                    }
+                ],
+                "taxa_aumento_casos": [
+                    {
+                        "titulo": "Cinco estados est\u00e3o em alerta para s\u00edndrome respirat\u00f3ria aguda grave",
+                        "veiculo": "agenciabrasil.ebc.com.br",
+                        "distancia": 0.2554
+                    },
+                    {
+                        "titulo": "Casos de s\u00edndrome respirat\u00f3ria grave caem 45% no Par\u00e1 nas \u00faltimas semanas, aponta Sespa",
+                        "veiculo": "oliberal.com",
+                        "distancia": 0.261
+                    },
+                    {
+                        "titulo": "Acre registra alta de casos de s\u00edndrome respirat\u00f3ria grave associados ao rinov\u00edrus, aponta Fiocruz",
+                        "veiculo": "agazetadoacre.com",
+                        "distancia": 0.263
+                    }
+                ]
+            },
+            "modelo": null,
+            "tokens_entrada": null,
+            "tokens_saida": null,
+            "mensagem": null
+        },
+        {
+            "sequencia": 9,
+            "ocorrido_em": "2026-09-16T03:01:28.409378Z",
+            "etapa": "llm",
+            "acao": "redigir_tentativa_1",
+            "status": "ok",
+            "duracao_ms": 9918,
+            "parametros": {
+                "modelo": "gemini-3.8-flash"
+            },
+            "resultado": {
+                "tokens_acumulados": 10141,
+                "chamadas_acumuladas": 2
+            },
+            "modelo": "gemini-3.8-flash",
+            "tokens_entrada": 5854,
+            "tokens_saida": 3241,
+            "mensagem": null
+        },
+        {
+            "sequencia": 10,
+            "ocorrido_em": "2026-09-16T03:01:28.414276Z",
+            "etapa": "guardrail",
+            "acao": "verificacao_de_saida",
+            "status": "bloqueado",
+            "duracao_ms": 0,
+            "parametros": {},
+            "resultado": {
+                "detalhe": "o percentual 45.0% nao corresponde a nenhuma metrica calculada; o percentual 90.0% nao corresponde a nenhuma metrica calculada; o percentual 2.4% nao corresponde a nenhuma metrica calculada",
+                "aprovado": false,
+                "guardrail": "verificacao_de_saida",
+                "problemas": [
+                    "o percentual 45.0% nao corresponde a nenhuma metrica calculada",
+                    "o percentual 90.0% nao corresponde a nenhuma metrica calculada",
+                    "o percentual 2.4% nao corresponde a nenhuma metrica calculada"
+                ],
+                "tentativa": 1
+            },
+            "modelo": null,
+            "tokens_entrada": null,
+            "tokens_saida": null,
+            "mensagem": "o percentual 45.0% nao corresponde a nenhuma metrica calculada; o percentual 90.0% nao corresponde a nenhuma metrica calculada; o percentual 2.4% nao corresponde a nenhuma metrica calculada"
+        },
+        {
+            "sequencia": 11,
+            "ocorrido_em": "2026-09-16T03:01:40.139266Z",
+            "etapa": "llm",
+            "acao": "redigir_tentativa_2",
+            "status": "ok",
+            "duracao_ms": 11720,
+            "parametros": {
+                "modelo": "gemini-3.8-flash"
+            },
+            "resultado": {
+                "tokens_acumulados": 20087,
+                "chamadas_acumuladas": 3
+            },
+            "modelo": "gemini-3.8-flash",
+            "tokens_entrada": 5984,
+            "tokens_saida": 3962,
+            "mensagem": null
+        },
+        {
+            "sequencia": 12,
+            "ocorrido_em": "2026-09-16T03:01:40.144443Z",
+            "etapa": "guardrail",
+            "acao": "verificacao_de_saida",
+            "status": "ok",
+            "duracao_ms": 0,
+            "parametros": {},
+            "resultado": {
+                "detalhe": "15 numeros conferidos, nenhum problema",
+                "aprovado": true,
+                "guardrail": "verificacao_de_saida",
+                "problemas": [],
+                "tentativa": 2
+            },
+            "modelo": null,
+            "tokens_entrada": null,
+            "tokens_saida": null,
+            "mensagem": "15 numeros conferidos, nenhum problema"
+        },
+        {
+            "sequencia": 13,
+            "ocorrido_em": "2026-09-16T03:01:40.148605Z",
+            "etapa": "relatorio",
+            "acao": "montar",
+            "status": "ok",
+            "duracao_ms": 0,
+            "parametros": {
+                "com_ressalva": false
+            },
+            "resultado": {
+                "caracteres": 11051,
+                "com_ressalva": false
+            },
+            "modelo": null,
+            "tokens_entrada": null,
+            "tokens_saida": null,
+            "mensagem": null
+        }
+    ]
+}

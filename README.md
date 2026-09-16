@@ -15,6 +15,11 @@ escreve a análise, que depois passa por uma verificação automática antes de 
 
 O diagrama conceitual também está em [`docs/arquitetura.pdf`](docs/arquitetura.pdf).
 
+**Um relatório de verdade, gerado pela solução, está em [`reports/exemplo/`](reports/exemplo/)**
+— [PDF](reports/exemplo/relatorio.pdf), [Markdown](reports/exemplo/relatorio.md) e a
+[trilha de auditoria completa](reports/exemplo/auditoria.json) daquela execução. Dá para ver a
+solução sem precisar rodar nada.
+
 ---
 
 ## Como rodar
@@ -42,7 +47,8 @@ GOOGLE_API_KEY=sua-chave-aqui
 ```
 
 e recrie o container da API (`make down && make up`). O endpoint `/health` diz em que modo o
-serviço está.
+serviço está. Os modelos usados (`gemini-3.8-flash` e `gemini-embedding-001`) são os padrões do
+código e podem ser trocados por variável de ambiente — veja [`.env.example`](.env.example).
 
 ### Comandos disponíveis
 
@@ -167,6 +173,21 @@ qualquer afirmação qualitativa até a matéria que a sustenta.
 | Injeção via notícia | detector heurístico descarta matérias com padrão de instrução ("ignore as instruções anteriores", marcações de papel, comandos SQL); o que passa entra no prompt dentro de bloco delimitado, com o system prompt declarando que aquilo é dado, não ordem |
 | Verificação da saída | todo percentual e toda contagem acima de mil citados no texto são conferidos contra os valores calculados; toda citação `[n]` precisa resolver para uma matéria recuperada; o texto é varrido por padrões de CPF, cartão do SUS, telefone e e-mail, e por linguagem de conduta clínica individual |
 | Orçamento | teto de chamadas e de tokens por execução, com o estouro registrado e interrompendo o fluxo |
+
+### O guardrail funcionando
+
+A execução que está em `reports/exemplo/` não foi escolhida a dedo: na primeira tentativa o
+modelo pegou um "caem 45%" de uma manchete sobre o Pará e apresentou como se fosse métrica
+calculada. A verificação recusou o texto, o agente reescreveu com o motivo em mãos e a segunda
+versão passou. Está tudo na trilha:
+
+```
+ 9  llm        redigir_tentativa_1    ok          9918ms   9.095 tokens
+10  guardrail  verificacao_de_saida   bloqueado   "o percentual 45.0% não corresponde
+                                                   a nenhuma métrica calculada"
+11  llm        redigir_tentativa_2    ok         11720ms   9.946 tokens
+12  guardrail  verificacao_de_saida   ok          "15 números conferidos, nenhum problema"
+```
 
 Reprovou na verificação? O agente reescreve com o motivo em mãos, no máximo duas vezes.
 Persistindo, o relatório sai **sem a análise textual** e com a ressalva explícita — os
