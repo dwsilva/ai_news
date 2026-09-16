@@ -11,6 +11,10 @@ htmlcov/
 .env
 .env.local
 
+# configuracao local de editor
+.vscode/
+.idea/
+
 # base bruta do DATASUS: ~1 GB, baixada sob demanda pelo comando de ingestao
 data/bruto/
 data/*.csv
