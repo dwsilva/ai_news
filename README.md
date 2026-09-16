@@ -26,49 +26,72 @@ solução sem precisar rodar nada.
 
 ## Como rodar
 
-**Pré-requisitos:** Docker e Docker Compose. Nada mais — Python, Postgres, Graphviz e as
-bibliotecas de PDF ficam todos dentro da imagem. (No Windows, rode os comandos de dentro do
-WSL, onde o Docker está instalado.)
+**Pré-requisito:** Docker e Docker Compose. Nada mais — Python, Postgres, Graphviz e as
+bibliotecas de PDF ficam todos dentro da imagem.
 
 ```bash
-# 1. sobe o banco e a API, e aplica o schema
-make up
-
-# 2. carrega os microdados de um ano (baixa ~300 MB do Open DATASUS)
-make ingest ANO=2026
-
-# 3. abre http://localhost:8080
+docker compose up -d --build                                    # sobe banco e API
+docker compose exec -T api python -m srag.cli schema            # cria o schema
+docker compose exec -T api python -m srag.cli ingestao --ano 2026   # carrega um ano (~300 MB)
 ```
 
-Sem chave de API o sistema continua funcionando: o relatório sai com os indicadores, os
-gráficos e o apêndice de rastreabilidade, e a análise textual é omitida. Para ter a parte
-escrita, crie um arquivo `.env` na raiz com a sua chave do Gemini:
+Pronto: `http://localhost:8080`.
+
+Há um `Makefile` com atalhos para os mesmos comandos (`make up`, `make ingest ANO=2026`), mas
+ele é conveniência, não requisito. **No PowerShell e no Prompt de Comando do Windows o `make`
+não existe** — use os comandos `docker compose` acima, que funcionam em qualquer terminal, ou
+rode o `make` a partir do WSL ou do Git Bash.
+
+### Carregando vários anos
+
+O comando aceita `--ano` repetido e carrega um arquivo de cada vez:
+
+```bash
+docker compose exec -T api python -m srag.cli ingestao --ano 2024 --ano 2025 --ano 2026
+```
+
+Pelo Makefile, `make ingest ANOS="2024 2025 2026"`.
+
+Os anos vão de 2019 a 2026 e podem ser carregados em qualquer ordem ou em execuções separadas:
+a tabela acumula e deduplica pela chave da notificação, então repetir um ano já carregado não
+duplica nada. Cada arquivo tem de 200 a 400 MB, e 2021 sozinho tem 1,7 milhão de linhas — o
+ano de pico da covid.
+
+O relatório de exemplo foi gerado sobre **2021 a 2026**, 3.402.357 internações, o que inclui o
+conjunto "SRAG 2021 a 2024" citado no enunciado do desafio. Para só experimentar, um ano basta:
+a janela de análise é ancorada na data mais recente da base, seja ela qual for.
+
+### A chave do Gemini
+
+Sem chave o sistema roda assim mesmo: o relatório sai com os indicadores, os gráficos e o
+apêndice de rastreabilidade, e só a análise textual é omitida. Para ter a parte escrita, crie
+um `.env` na raiz com **uma linha**:
 
 ```
 GOOGLE_API_KEY=sua-chave-aqui
 ```
 
-e recrie o container da API (`make down && make up`). O endpoint `/health` diz em que modo o
-serviço está. Os modelos usados (`gemini-3.8-flash` e `gemini-embedding-001`) são os padrões do
-código e podem ser trocados por variável de ambiente — veja [`.env.example`](.env.example).
+e recrie o container da API (`docker compose up -d api`). O endpoint `/health` diz em que modo
+o serviço está.
+
+Resista à tentação de fixar nome de modelo no `.env`. O Google aposenta modelo sem aviso, e um
+nome fixo ali vence o default do código — que é atualizado junto com o projeto. As demais
+variáveis, todas opcionais, estão em [`docs/configuracao.md`](docs/configuracao.md).
 
 ### Comandos disponíveis
 
-| Comando | O que faz |
+| Comando | Equivalente sem `make` |
 | --- | --- |
-| `make up` / `make down` | sobe e derruba o ambiente |
-| `make ingest ANO=2026` | baixa e carrega o CSV daquele ano |
-| `make relatorio UF=SP` | gera um relatório pela linha de comando |
-| `make test` | roda a suíte de testes |
-| `make lint` | roda o ruff |
-| `make diagrama` | regenera `docs/arquitetura.pdf` a partir do `.dot` |
-| `make logs` | acompanha o log da API |
+| `make up` | `docker compose up -d --build` + `... cli schema` |
+| `make down` | `docker compose down` |
+| `make ingest ANOS="2025 2026"` | `... cli ingestao --ano 2025 --ano 2026` |
+| `make relatorio UF=SP` | `... cli relatorio --uf SP` |
+| `make test` | `docker compose exec -T api pytest -q` |
+| `make lint` | `docker compose exec -T api ruff check src tests` |
+| `make diagrama` | `... cli diagrama` |
+| `make logs` | `docker compose logs -f api` |
 
-Os anos disponíveis vão de 2019 a 2026 e podem ser carregados juntos — a tabela acumula e
-deduplica pela chave da notificação. O relatório de exemplo foi gerado sobre **2021 a 2026**,
-3.402.357 internações, o que inclui o conjunto "SRAG 2021 a 2024" citado no enunciado do
-desafio. Para só experimentar, um ano basta: a janela de análise é ancorada na data mais
-recente da base.
+Onde `...` é `docker compose exec -T api python -m srag.cli`.
 
 ### Interfaces
 
@@ -279,7 +302,7 @@ src/srag/
   api/               FastAPI e interface web
   cli.py
 tests/               71 testes
-docs/                diagrama, decisões de arquitetura, dicionário de métricas
+docs/                diagrama, decisões de arquitetura, dicionário de métricas, configuração
 ```
 
 ## Testes

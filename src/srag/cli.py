@@ -29,18 +29,35 @@ def schema() -> None:
 
 @app.command()
 def ingestao(
-    ano: int = typer.Option(..., "--ano", help="Ano-base do arquivo do SIVEP."),
+    ano: list[int] = typer.Option(
+        ..., "--ano", help="Ano-base do arquivo do SIVEP. Repita a opcao para carregar varios."
+    ),
     url: str | None = typer.Option(None, "--url", help="Sobrescreve a URL do CSV."),
-    limite: int | None = typer.Option(None, "--limite", help="Lê apenas as N primeiras linhas."),
+    limite: int | None = typer.Option(None, "--limite", help="Le apenas as N primeiras linhas."),
 ) -> None:
-    """Baixa o CSV do Open DATASUS e carrega no banco."""
+    """Baixa os CSV do Open DATASUS e carrega no banco.
+
+    Os anos sao carregados em sequencia, um de cada vez, porque cada arquivo tem centenas de
+    megabytes e nao faz sentido segurar mais de um na memoria.
+    """
     from srag.ingestao.carga import carregar_ano
 
-    resumo = carregar_ano(ano, url=url, limite=limite)
-    typer.echo(
-        f"{resumo.linhas_gravadas} linhas gravadas "
-        f"({resumo.linhas_descartadas} descartadas por falta de data de sintomas)"
-    )
+    anos = sorted(set(ano))
+    if url and len(anos) > 1:
+        raise typer.BadParameter("--url so faz sentido com um unico --ano")
+
+    total = 0
+    for indice, ano_base in enumerate(anos, start=1):
+        typer.echo(f"[{indice}/{len(anos)}] {ano_base}")
+        resumo = carregar_ano(ano_base, url=url, limite=limite)
+        total += resumo.linhas_gravadas
+        typer.echo(
+            f"  {resumo.linhas_gravadas} linhas gravadas "
+            f"({resumo.linhas_descartadas} descartadas por falta de data de sintomas)"
+        )
+
+    if len(anos) > 1:
+        typer.echo(f"total: {total} linhas gravadas em {len(anos)} anos")
 
 
 @app.command()
