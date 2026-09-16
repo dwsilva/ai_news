@@ -1,5 +1,7 @@
 # Relatórios automatizados de SRAG
 
+[![testes](https://github.com/davidcouto-ai/ai_news/actions/workflows/testes.yml/badge.svg)](https://github.com/davidcouto-ai/ai_news/actions/workflows/testes.yml)
+
 Prova de conceito de um agente que gera relatórios de situação sobre Síndrome Respiratória
 Aguda Grave. Ele consulta os microdados do SIVEP-Gripe publicados no Open DATASUS, calcula
 quatro indicadores, desenha os gráficos de evolução e busca notícias recentes para explicar o
@@ -294,6 +296,11 @@ com um modelo falso e o contrato da API.
 Os testes de métrica rodam contra um Postgres de verdade, num banco descartável criado na hora.
 Metade do que essas consultas fazem é comportamento do próprio Postgres — `count(*) FILTER`,
 `date_trunc`, o cast dos parâmetros nulos —, então testar contra mock não provaria nada.
+
+A mesma suíte roda no GitHub Actions a cada push e a cada pull request, contra um serviço
+`pgvector/pgvector:pg16` ([`.github/workflows/testes.yml`](.github/workflows/testes.yml)).
+Nenhum teste depende de rede ou de chave de API: a coleta de notícias é substituída por um
+dossiê fixo e o modelo, por um dublê. Se a suíte ficar vermelha, é código, não ambiente.
 
 ---
 
