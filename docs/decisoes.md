@@ -99,6 +99,14 @@ Quando a verificação reprova duas vezes, o relatório sai sem a análise textu
 explícita. Relatório com um buraco declarado é melhor do que relatório com número não
 rastreável.
 
+O que essa verificação **não** faz: julgar se a matéria citada sustenta a frase. Ela confere que
+o `[n]` aponta para algo que foi mesmo recuperado, e para aí. Numa execução real o modelo
+atribuiu uma afirmação sobre mortalidade em idosos a duas matérias que tratavam de outra coisa —
+afirmação correta, fonte errada. Cobrir isso pede um segundo modelo avaliando implicação entre a
+frase e o trecho, uma chamada por afirmação, e resolve o problema de alucinação criando o de
+confiar num LLM para auditar outro. Ficou de fora, e está declarado no README como limitação
+conhecida.
+
 ## 9. Markdown como formato canônico do relatório
 
 O relatório é montado em Markdown e derivado dali para HTML (com os gráficos em base64) e PDF.

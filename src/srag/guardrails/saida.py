@@ -118,7 +118,9 @@ def _valores_permitidos(painel: Painel) -> dict[str, set[float]]:
         if metrica.ignorados:
             contagens.add(float(metrica.ignorados))
         for quebra in metrica.quebras:
-            if quebra.valor is not None:
+            # Recorte em dias nao pode validar um percentual: se entrasse aqui, uma
+            # permanencia de 4,7 dias autorizaria o modelo a escrever "4,7%".
+            if quebra.valor is not None and quebra.unidade == "%":
                 percentuais.add(round(quebra.valor, 1))
             contagens.update({float(quebra.numerador), float(quebra.denominador)})
 
