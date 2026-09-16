@@ -88,9 +88,12 @@ class GoogleNews:
             veiculo = ""
             if isinstance(entrada.get("source"), dict):
                 veiculo = entrada["source"].get("title", "")
-            # O titulo do Google News termina com " - Veiculo"; sem isso a citacao fica feia.
-            if not veiculo and " - " in titulo:
-                titulo, _, veiculo = titulo.rpartition(" - ")
+            # O titulo do Google News sempre termina com " - Veiculo". Se ficar, a citacao
+            # sai com o nome do veiculo duas vezes.
+            if " - " in titulo:
+                sem_sufixo, _, sufixo = titulo.rpartition(" - ")
+                if not veiculo or sufixo.strip() == veiculo.strip():
+                    titulo, veiculo = sem_sufixo, veiculo or sufixo
 
             artigos.append(
                 Artigo(

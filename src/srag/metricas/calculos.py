@@ -11,6 +11,7 @@ from sqlalchemy import text
 
 from srag.config import get_config
 from srag.db import engine_leitura
+from srag.ingestao.dominios import ORDEM_FAIXAS
 from srag.metricas import consultas
 from srag.metricas.modelos import (
     Filtro,
@@ -213,7 +214,9 @@ def taxa_de_vacinacao(filtro: Filtro, janela: Janela) -> MetricaCalculada:
         janela=janela,
         limitacao=limitacao,
         quebras=_suprimir_pequenas(
-            [_quebra(faixa.rotulo, faixa.numerador, faixa.denominador) for faixa in por_faixa]
+            _em_ordem_de_idade(
+                [_quebra(faixa.rotulo, faixa.numerador, faixa.denominador) for faixa in por_faixa]
+            )
         ),
         consulta=consultas.VACINACAO,
         parametros=_serializavel(parametros),
@@ -270,6 +273,12 @@ def _milhar(valor: int) -> str:
 def _quebra(rotulo: str, numerador: int, denominador: int) -> Quebra:
     valor = None if denominador == 0 else round(numerador / denominador * 100, 1)
     return Quebra(rotulo=rotulo, numerador=numerador, denominador=denominador, valor=valor)
+
+
+def _em_ordem_de_idade(quebras: list[Quebra]) -> list[Quebra]:
+    """O banco devolve as faixas em ordem alfabetica, que poe "1 a 4 anos" depois de "12 a 17"."""
+    posicao = {rotulo: indice for indice, rotulo in enumerate(ORDEM_FAIXAS)}
+    return sorted(quebras, key=lambda quebra: posicao.get(quebra.rotulo, len(posicao)))
 
 
 def _suprimir_pequenas(quebras: list[Quebra]) -> list[Quebra]:

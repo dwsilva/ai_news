@@ -152,3 +152,28 @@ def test_filtro_por_uf_nao_mistura_estados(inserir, filtro_padrao, dia):
     serie = serie_diaria(filtro_padrao.model_copy(update={"uf": "SP"}), date(2026, 6, 30))
 
     assert serie.total == 2
+
+
+def test_faixas_etarias_saem_em_ordem_de_idade(inserir, filtro_padrao, dia):
+    faixas = ["< 1 ano", "5 a 11 anos", "60 a 69 anos", "12 a 17 anos"]
+    inserir(
+        *[
+            {
+                "chave_notificacao": f"{faixa}-{i}",
+                "dt_sintomas": dia(i + 1),
+                "faixa_etaria": faixa,
+                "vacina_covid": "Sim",
+            }
+            for faixa in faixas
+            for i in range(6)
+        ]
+    )
+
+    metrica = taxa_de_vacinacao(filtro_padrao, JANELA)
+
+    assert [quebra.rotulo for quebra in metrica.quebras] == [
+        "< 1 ano",
+        "5 a 11 anos",
+        "12 a 17 anos",
+        "60 a 69 anos",
+    ]

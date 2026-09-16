@@ -29,7 +29,9 @@ MENOR_CONTAGEM_VERIFICADA = 1_000
 
 PADRAO_PERCENTUAL = re.compile(r"(\d{1,3}(?:[.,]\d{1,2})?)\s*(?:%|p\.p\.|pontos percentuais)")
 PADRAO_CONTAGEM = re.compile(r"\b\d{1,3}(?:\.\d{3})+\b|\b\d{4,}\b")
-PADRAO_CITACAO = re.compile(r"\[(\d{1,2})\]")
+# O modelo agrupa citacoes ("[1, 2]"), entao o padrao aceita a lista inteira e depois
+# separa os indices. Sem isso, citacao agrupada passaria sem conferencia nenhuma.
+PADRAO_CITACAO = re.compile(r"\[(\d{1,2}(?:\s*,\s*\d{1,2})*)\]")
 PADRAO_DATA = re.compile(r"\b\d{1,2}/\d{1,2}/\d{2,4}\b")
 
 PADROES_DE_DADO_PESSOAL = [
@@ -82,7 +84,7 @@ def verificar(texto: str, painel: Painel, fontes: list[Fonte]) -> Veredito:
             problemas.append(f"a contagem {contagem:.0f} nao aparece nos dados consultados")
 
     indices_validos = {fonte.indice for fonte in fontes}
-    for citacao in {int(marca) for marca in PADRAO_CITACAO.findall(texto)}:
+    for citacao in sorted(_indices_citados(texto)):
         if citacao not in indices_validos:
             problemas.append(f"a citacao [{citacao}] nao corresponde a nenhuma fonte recuperada")
 
@@ -125,6 +127,13 @@ def _valores_permitidos(painel: Painel) -> dict[str, set[float]]:
         contagens.update(float(ponto.casos) for ponto in serie.pontos)
 
     return {"percentuais": percentuais, "contagens": contagens}
+
+
+def _indices_citados(texto: str) -> set[int]:
+    indices: set[int] = set()
+    for grupo in PADRAO_CITACAO.findall(texto):
+        indices.update(int(marca) for marca in grupo.split(","))
+    return indices
 
 
 def _confere(valor: float, permitidos: set[float], tolerancia: float) -> bool:

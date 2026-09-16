@@ -22,8 +22,11 @@ class Config(BaseSettings):
     statement_timeout_ms: int = 15_000
 
     google_api_key: str = Field(default="", validation_alias="GOOGLE_API_KEY")
-    modelo_llm: str = "gemini-2.5-flash"
-    modelo_embedding: str = "models/text-embedding-004"
+    modelo_llm: str = "gemini-3.8-flash"
+    modelo_embedding: str = "models/gemini-embedding-001"
+    # O modelo devolve 3072 dimensoes por padrao. Peco 768 porque a familia suporta
+    # truncagem (Matryoshka) e o indice cabe melhor; a coluna vector() segue esse numero.
+    dimensoes_embedding: int = 768
     temperatura_llm: float = 0.2
 
     max_chamadas_llm: int = 12

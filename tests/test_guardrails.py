@@ -199,3 +199,13 @@ def test_data_no_texto_nao_e_confundida_com_metrica():
     )
 
     assert veredito.aprovado, veredito.problemas
+
+
+def test_citacao_agrupada_tambem_e_conferida():
+    veredito = saida.verificar(
+        "Os casos caíram em todo o país [1, 4].", painel_de_teste(), FONTES
+    )
+
+    assert not veredito.aprovado
+    assert any("[4]" in problema for problema in veredito.problemas)
+    assert not any("[1]" in problema for problema in veredito.problemas)

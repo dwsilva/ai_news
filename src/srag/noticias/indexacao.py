@@ -7,6 +7,9 @@ trecho de qual materia entrou no contexto de cada comentario.
 
 O volume aqui e pequeno (dezenas de materias por execucao), entao a busca e exaustiva por
 distancia de cosseno. Um indice HNSW so faria sentido com ordens de grandeza a mais.
+
+Os vetores truncados do gemini-embedding nao vem normalizados, mas isso nao importa aqui:
+o operador <=> do pgvector e distancia de cosseno, que ja divide pelas normas.
 """
 
 import logging
@@ -37,6 +40,7 @@ class Embeddings:
         self._cliente = GoogleGenerativeAIEmbeddings(
             model=modelo or cfg.modelo_embedding,
             google_api_key=cfg.google_api_key,
+            output_dimensionality=cfg.dimensoes_embedding,
         )
 
     def documentos(self, textos: list[str]) -> list[list[float]]:
