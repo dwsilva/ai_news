@@ -177,3 +177,19 @@ def test_faixas_etarias_saem_em_ordem_de_idade(inserir, filtro_padrao, dia):
         "12 a 17 anos",
         "60 a 69 anos",
     ]
+
+
+def test_a_leitura_e_somente_leitura_e_a_carga_tem_folga_de_tempo(banco):
+    from srag.config import get_config
+    from srag.db import opcoes_de_conexao
+
+    cfg = get_config()
+    leitura = opcoes_de_conexao(somente_leitura=True)
+    escrita = opcoes_de_conexao(somente_leitura=False)
+
+    assert "default_transaction_read_only=on" in leitura
+    assert f"statement_timeout={cfg.statement_timeout_ms}" in leitura
+    # A carga precisa de um limite proprio: com o do agente, o ano de pico da covid nao entra.
+    assert "default_transaction_read_only" not in escrita
+    assert f"statement_timeout={cfg.statement_timeout_carga_ms}" in escrita
+    assert cfg.statement_timeout_carga_ms > cfg.statement_timeout_ms

@@ -19,7 +19,11 @@ class Config(BaseSettings):
     database_url: str = "postgresql+psycopg://srag:srag@localhost:55432/srag"
     # Conexao usada pelas ferramentas do agente. Aponta para um papel que so tem SELECT.
     database_url_leitura: str = ""
+    # Guardrail da leitura: uma consulta do agente que passar disso e cancelada.
     statement_timeout_ms: int = 15_000
+    # A carga e batch e move centenas de milhares de linhas de uma vez, entao tem um
+    # limite proprio - o do agente nao serve de nada aqui e so faz a ingestao falhar.
+    statement_timeout_carga_ms: int = 600_000
 
     google_api_key: str = Field(default="", validation_alias="GOOGLE_API_KEY")
     modelo_llm: str = "gemini-3.8-flash"

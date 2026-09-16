@@ -12,15 +12,26 @@ from sqlalchemy import Engine, create_engine, text
 from srag.config import get_config
 
 
-def _criar(url: str, somente_leitura: bool) -> Engine:
+def opcoes_de_conexao(somente_leitura: bool) -> str:
+    """Parametros de sessao do Postgres, por tipo de conexao.
+
+    O timeout curto e guardrail do agente: consulta que degenerou morre em 15 segundos. A
+    carga nao pode herdar esse limite - ela move mais de um milhao de linhas de uma vez, e no
+    ano de pico da covid a consolidacao sozinha passa de um minuto.
+    """
     cfg = get_config()
-    opcoes = f"-c statement_timeout={cfg.statement_timeout_ms}"
+    limite = cfg.statement_timeout_ms if somente_leitura else cfg.statement_timeout_carga_ms
+    opcoes = f"-c statement_timeout={limite}"
     if somente_leitura:
         opcoes += " -c default_transaction_read_only=on"
+    return opcoes
+
+
+def _criar(url: str, somente_leitura: bool) -> Engine:
     return create_engine(
         url,
         pool_pre_ping=True,
-        connect_args={"options": opcoes},
+        connect_args={"options": opcoes_de_conexao(somente_leitura)},
     )
 
 
