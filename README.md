@@ -1,6 +1,6 @@
 # Relatórios automatizados de SRAG
 
-[![testes](https://github.com/davidcouto-ai/ai_news/actions/workflows/testes.yml/badge.svg)](https://github.com/davidcouto-ai/ai_news/actions/workflows/testes.yml)
+[![testes](https://github.com/dwsilva/ai_news/actions/workflows/testes.yml/badge.svg)](https://github.com/dwsilva/ai_news/actions/workflows/testes.yml)
 
 Prova de conceito de um agente que gera relatórios de situação sobre Síndrome Respiratória
 Aguda Grave. Ele consulta os microdados do SIVEP-Gripe publicados no Open DATASUS, calcula
