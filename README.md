@@ -63,7 +63,10 @@ código e podem ser trocados por variável de ambiente — veja [`.env.example`]
 | `make logs` | acompanha o log da API |
 
 Os anos disponíveis vão de 2019 a 2026 e podem ser carregados juntos — a tabela acumula e
-deduplica. Carregar 2025 e 2026 deixa a série de 12 meses completa.
+deduplica pela chave da notificação. O relatório de exemplo foi gerado sobre **2021 a 2026**,
+3.402.357 internações, o que inclui o conjunto "SRAG 2021 a 2024" citado no enunciado do
+desafio. Para só experimentar, um ano basta: a janela de análise é ancorada na data mais
+recente da base.
 
 ### Interfaces
 
@@ -131,12 +134,41 @@ números:
   assistencial, o relatório traz também a permanência média em UTI.
 - **A taxa de vacinação é entre os casos notificados, não da população.** A base só enxerga
   quem adoeceu o suficiente para ser notificado. Ela responde "qual o perfil vacinal de quem
-  está internando", não "quantos brasileiros estão vacinados".
+  está internando", não "quantos brasileiros estão vacinados". Vale a pena detalhar esse ponto,
+  logo abaixo.
 
 Uma terceira decisão que merece destaque: a janela de análise **não termina no último dia da
 base**. O SIVEP é preenchido com atraso, e os dias mais recentes aparecem sempre incompletos.
 Se a janela fosse até o último registro, esse atraso seria lido como queda de casos. Por isso a
 data de referência padrão é `max(data de sintomas) − 5 dias`, e o relatório declara isso.
+
+### Sobre "taxa de vacinação da população"
+
+O indicador pedido é a taxa de vacinação **da população**. Os microdados do SIVEP-Gripe não
+têm essa informação: o campo `VACINA_COV` é autodeclarado por caso notificado, e o denominador
+disponível são internações, não habitantes. Não dá para derivar cobertura populacional de uma
+base que só registra quem adoeceu.
+
+Fui atrás da fonte que teria o dado. A cobertura oficial vem do SI-PNI, publicada no conjunto
+[Campanha Nacional de Vacinação contra Covid-19](https://opendatasus.saude.gov.br/dataset/covid-19-vacinacao),
+que é microdado por dose aplicada — dezenas de gigabytes, quebrados por UF — e cuja API exige
+credencial. Ingerir isso numa PoC seria desproporcional, e amarraria quem for avaliar o projeto
+a uma credencial que ele não tem.
+
+O que fiz, então:
+
+1. **Calculo e reporto o que a base sustenta**: a proporção de casos graves de SRAG que
+   declararam vacinação, com quebra por faixa etária. É um indicador legítimo e, para o caso de
+   uso do desafio — entender severidade e avanço do surto —, arguivelmente mais informativo que
+   a cobertura populacional: o contraste entre 1,5% de vacinados na faixa de menores de 1 ano e
+   90,3% acima de 80 anos diz algo direto sobre quem está internando.
+2. **Declaro a diferença no próprio relatório**, na linha "Como ler" da métrica, para que
+   ninguém leia o número como cobertura nacional.
+3. **Deixo o ponto de extensão preparado**: `data/referencia/` existe para receber uma tabela de
+   cobertura oficial por UF, com citação de fonte, se a PoC virar produto.
+
+Preferi entregar um número correto com o rótulo certo a entregar um número com o rótulo que o
+enunciado pediu mas que os dados não sustentam.
 
 Definições completas em [`docs/dicionario_metricas.md`](docs/dicionario_metricas.md).
 
@@ -176,18 +208,22 @@ qualquer afirmação qualitativa até a matéria que a sustenta.
 
 ### O guardrail funcionando
 
-A execução que está em `reports/exemplo/` não foi escolhida a dedo: na primeira tentativa o
-modelo pegou um "caem 45%" de uma manchete sobre o Pará e apresentou como se fosse métrica
-calculada. A verificação recusou o texto, o agente reescreveu com o motivo em mãos e a segunda
-versão passou. Está tudo na trilha:
+A execução que está em `reports/exemplo/` não foi escolhida a dedo. Na primeira tentativa o
+modelo pegou um percentual de uma matéria e apresentou como se fosse métrica calculada. A
+verificação recusou o texto, o agente reescreveu com o motivo em mãos e a segunda versão
+passou. Está tudo na trilha:
 
 ```
- 9  llm        redigir_tentativa_1    ok          9918ms   9.095 tokens
-10  guardrail  verificacao_de_saida   bloqueado   "o percentual 45.0% não corresponde
+ 9  llm        redigir_tentativa_1    ok          10.663ms   8.068 tokens
+10  guardrail  verificacao_de_saida   bloqueado   "o percentual 2.4% não corresponde
                                                    a nenhuma métrica calculada"
-11  llm        redigir_tentativa_2    ok         11720ms   9.946 tokens
-12  guardrail  verificacao_de_saida   ok          "15 números conferidos, nenhum problema"
+11  llm        redigir_tentativa_2    ok          10.417ms   8.367 tokens
+12  guardrail  verificacao_de_saida   ok          "16 números conferidos, nenhum problema"
 ```
+
+Isso aconteceu nas duas execuções que rodei para gerar o exemplo, com números diferentes —
+não é um caso raro que eu tenha caçado. É o comportamento esperado de um modelo que recebe
+manchetes cheias de percentuais no contexto, e é exatamente por isso que a verificação existe.
 
 Reprovou na verificação? O agente reescreve com o motivo em mãos, no máximo duas vezes.
 Persistindo, o relatório sai **sem a análise textual** e com a ressalva explícita — os
