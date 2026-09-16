@@ -10,6 +10,7 @@ from srag.metricas.modelos import (
     MetricaCalculada,
     Painel,
     PontoSerie,
+    Quebra,
     SerieTemporal,
 )
 from srag.noticias.modelos import Fonte
@@ -209,3 +210,16 @@ def test_citacao_agrupada_tambem_e_conferida():
     assert not veredito.aprovado
     assert any("[4]" in problema for problema in veredito.problemas)
     assert not any("[1]" in problema for problema in veredito.problemas)
+
+
+def test_recorte_em_dias_nao_autoriza_o_mesmo_numero_como_percentual():
+    painel = painel_de_teste()
+    painel.metricas[0].quebras = [
+        Quebra(rotulo="Permanência média em UTI", numerador=10, denominador=10,
+               valor=4.7, unidade="dias")
+    ]
+
+    # O valor pode ser citado como dias...
+    assert saida.verificar("A permanência média foi de 4,7 dias.", painel, FONTES).aprovado
+    # ...mas nao como percentual, que e outra grandeza.
+    assert not saida.verificar("A taxa ficou em 4,7%.", painel, FONTES).aprovado

@@ -160,10 +160,11 @@ def taxa_de_ocupacao_de_uti(filtro: Filtro, janela: Janela) -> MetricaCalculada:
     if linha.media_dias_uti is not None:
         quebras.append(
             Quebra(
-                rotulo="Permanência média em UTI (dias)",
+                rotulo="Permanência média em UTI",
                 numerador=linha.em_uti,
                 denominador=linha.em_uti,
                 valor=round(float(linha.media_dias_uti), 1),
+                unidade="dias",
             )
         )
 

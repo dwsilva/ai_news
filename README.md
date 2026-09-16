@@ -342,6 +342,14 @@ dossiê fixo e o modelo, por um dublê. Se a suíte ficar vermelha, é código, 
 - **Mortalidade com censura à direita.** Casos recentes ainda não têm desfecho, o que
   subestima a taxa nos últimos dias. O relatório informa quantos casos estão em aberto para
   dimensionar o efeito, mas não corrige o viés.
+- **A verificação de citação é sintática, não semântica.** O guardrail confere que todo `[n]`
+  resolve para uma matéria efetivamente recuperada — não que aquela matéria sustente a frase.
+  Numa execução real o modelo escreveu "o impacto da mortalidade concentra-se na população
+  idosa [2, 4]" citando duas matérias que falavam de rinovírus no Acre e de alerta no Mato
+  Grosso do Sul. A afirmação é epidemiologicamente correta, mas a fonte citada não era a fonte
+  dela. Fechar isso exigiria um segundo modelo julgando implicação entre a frase e o trecho
+  recuperado, o que custa uma chamada por afirmação e traz o problema de usar um LLM para
+  auditar outro. Achei honesto declarar em vez de deixar passar como se estivesse coberto.
 - **Execução em memória.** A API dispara a geração em background task do próprio processo. Em
   produção isso seria uma fila (Celery, RQ) com retentativa e isolamento.
 - **Sem autenticação.** É uma PoC local. Antes de expor qualquer coisa, precisaria de

@@ -193,3 +193,36 @@ def test_a_leitura_e_somente_leitura_e_a_carga_tem_folga_de_tempo(banco):
     assert "default_transaction_read_only" not in escrita
     assert f"statement_timeout={cfg.statement_timeout_carga_ms}" in escrita
     assert cfg.statement_timeout_carga_ms > cfg.statement_timeout_ms
+
+
+def test_permanencia_em_uti_sai_em_dias_e_nao_em_porcentagem(inserir, filtro_padrao, dia):
+    inserir(
+        {"chave_notificacao": "a", "dt_sintomas": dia(1), "uti": "Sim", "dias_uti": 4},
+        {"chave_notificacao": "b", "dt_sintomas": dia(2), "uti": "Sim", "dias_uti": 8},
+    )
+
+    metrica = taxa_de_ocupacao_de_uti(filtro_padrao, JANELA)
+
+    permanencia = next(q for q in metrica.quebras if "Permanência" in q.rotulo)
+    assert permanencia.unidade == "dias"
+    assert permanencia.formatado() == "6,0 dias"
+
+
+def test_recorte_percentual_sai_com_o_simbolo(inserir, filtro_padrao, dia):
+    inserir(
+        *[
+            {
+                "chave_notificacao": f"c-{i}",
+                "dt_sintomas": dia(i + 1),
+                "faixa_etaria": "60 a 69 anos",
+                "vacina_covid": "Sim" if i < 5 else "Não",
+            }
+            for i in range(10)
+        ]
+    )
+
+    metrica = taxa_de_vacinacao(filtro_padrao, JANELA)
+
+    faixa = next(q for q in metrica.quebras if q.rotulo == "60 a 69 anos")
+    assert faixa.unidade == "%"
+    assert faixa.formatado() == "50,0%"

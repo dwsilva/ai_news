@@ -269,9 +269,8 @@ def _metricas_para_prompt(painel: Painel) -> str:
             f"  limitacao: {metrica.limitacao}",
         ]
         for quebra in metrica.quebras:
-            valor = "indisponível" if quebra.valor is None else _decimal(quebra.valor)
             base = _milhar(quebra.denominador)
-            linhas.append(f"  recorte[{quebra.rotulo}]: {valor} (base {base})")
+            linhas.append(f"  recorte[{quebra.rotulo}]: {quebra.formatado()} (base {base})")
         blocos.append("\n".join(linhas))
     return "\n".join(blocos)
 
@@ -313,10 +312,6 @@ def _observacao_para_prompt(observacao: str | None) -> str:
 
 def _milhar(valor: int) -> str:
     return f"{valor:,}".replace(",", ".")
-
-
-def _decimal(valor: float) -> str:
-    return f"{valor:.1f}".replace(".", ",")
 
 
 def _texto_completo(redacao: Redacao) -> str:

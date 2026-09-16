@@ -89,8 +89,9 @@ def _bloco_da_metrica(metrica: MetricaCalculada, redacao: Redacao | None) -> str
     if metrica.quebras:
         linhas += ["", "| Recorte | Valor | Base |", "| --- | --- | --- |"]
         for quebra in metrica.quebras:
-            valor = "—" if quebra.valor is None else f"{quebra.valor:.1f}".replace(".", ",")
-            linhas.append(f"| {quebra.rotulo} | {valor} | {_milhar(quebra.denominador)} |")
+            linhas.append(
+                f"| {quebra.rotulo} | {quebra.formatado()} | {_milhar(quebra.denominador)} |"
+            )
 
     comentario = redacao.comentario(metrica.codigo) if redacao else ""
     if comentario:

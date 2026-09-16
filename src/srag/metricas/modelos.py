@@ -36,12 +36,23 @@ class Filtro(BaseModel):
 
 
 class Quebra(BaseModel):
-    """Recorte de uma metrica (por faixa etaria, por UF)."""
+    """Recorte de uma metrica (por faixa etaria, por UF).
+
+    A unidade vem junto porque nem todo recorte e percentual: a permanencia em UTI e em dias,
+    e um numero solto numa coluna chamada "Valor" nao diz qual dos dois e.
+    """
 
     rotulo: str
     numerador: int
     denominador: int
     valor: float | None
+    unidade: Literal["%", "dias"] = "%"
+
+    def formatado(self) -> str:
+        if self.valor is None:
+            return "indisponível"
+        numero = f"{self.valor:.1f}".replace(".", ",")
+        return f"{numero}%" if self.unidade == "%" else f"{numero} {self.unidade}"
 
 
 class MetricaCalculada(BaseModel):
