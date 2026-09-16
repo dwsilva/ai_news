@@ -233,10 +233,10 @@ qualquer afirmação qualitativa até a matéria que a sustenta.
 
 ### O guardrail funcionando
 
-A execução que está em `reports/exemplo/` não foi escolhida a dedo. Na primeira tentativa o
-modelo pegou um percentual de uma matéria e apresentou como se fosse métrica calculada. A
-verificação recusou o texto, o agente reescreveu com o motivo em mãos e a segunda versão
-passou. Está tudo na trilha:
+Em 8 execuções com o modelo, **a verificação de saída bloqueou o texto em 6 delas** e exigiu
+reescrita. Sempre pelo mesmo motivo: o contexto do prompt vem cheio de manchetes com
+percentuais ("casos caem 45% no Pará", "2,4% de positividade"), e o modelo trata algum deles
+como se fosse métrica calculada. A trilha de uma dessas execuções:
 
 ```
  9  llm        redigir_tentativa_1    ok          10.663ms   8.068 tokens
@@ -246,9 +246,12 @@ passou. Está tudo na trilha:
 12  guardrail  verificacao_de_saida   ok          "16 números conferidos, nenhum problema"
 ```
 
-Isso aconteceu nas duas execuções que rodei para gerar o exemplo, com números diferentes —
-não é um caso raro que eu tenha caçado. É o comportamento esperado de um modelo que recebe
-manchetes cheias de percentuais no contexto, e é exatamente por isso que a verificação existe.
+Não é um caso raro que eu tenha caçado — é o comportamento normal de um modelo com notícias no
+contexto, e é a razão de a verificação existir. A execução que está em `reports/exemplo/` é das
+duas que passaram de primeira; a trilha dela está em
+[`auditoria.json`](reports/exemplo/auditoria.json), com 20 números conferidos e nenhum
+bloqueio. Preferi publicar a execução que saiu, e não escolher uma que contasse a história mais
+bonita.
 
 Reprovou na verificação? O agente reescreve com o motivo em mãos, no máximo duas vezes.
 Persistindo, o relatório sai **sem a análise textual** e com a ressalva explícita — os
@@ -301,7 +304,7 @@ src/srag/
   relatorio/         montagem em Markdown e conversão para HTML/PDF
   api/               FastAPI e interface web
   cli.py
-tests/               71 testes
+tests/               77 testes
 docs/                diagrama, decisões de arquitetura, dicionário de métricas, configuração
 ```
 
