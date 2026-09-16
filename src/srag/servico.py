@@ -46,6 +46,10 @@ def gerar(
     cfg.preparar_diretorios()
 
     run_id = run_id or novo_run_id()
+    # A auditoria registra que houve observacao, mas nao o texto dela. E campo livre: nada
+    # impede alguem de digitar o nome de um paciente ali, e o log e o lugar mais facil de
+    # esquecer um dado desses. O que a observacao provocou continua rastreavel pelo prompt
+    # da chamada ao modelo, que fica na trilha.
     pedido = {
         "uf": uf,
         "janela_dias": janela_dias,
