@@ -1,7 +1,10 @@
-# Os alvos assumem docker e python disponiveis. No Windows, rodar de dentro do WSL.
+# Atalhos para os comandos do README. Sao conveniencia: tudo aqui pode ser rodado
+# direto com docker compose, que e o caminho para quem nao tem make (PowerShell, cmd).
 COMPOSE := docker compose
-ANO ?= 2024
-UF ?=
+# ANOS aceita varios: make ingest ANOS="2024 2025 2026"
+ANO  ?= 2026
+ANOS ?= $(ANO)
+UF   ?=
 
 .PHONY: up down logs shell schema ingest relatorio test lint diagrama
 
@@ -22,7 +25,7 @@ schema:
 	$(COMPOSE) exec -T api python -m srag.cli schema
 
 ingest:
-	$(COMPOSE) exec -T api python -m srag.cli ingestao --ano $(ANO)
+	$(COMPOSE) exec -T api python -m srag.cli ingestao $(foreach ano,$(ANOS),--ano $(ano))
 
 relatorio:
 	$(COMPOSE) exec -T api python -m srag.cli relatorio $(if $(UF),--uf $(UF),)
