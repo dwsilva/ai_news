@@ -1,0 +1,54 @@
+name: testes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  testes:
+    name: pytest e ruff
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: srag
+          POSTGRES_USER: srag
+          POSTGRES_PASSWORD: srag
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U srag -d srag"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      SRAG_DATABASE_URL: postgresql+psycopg://srag:srag@localhost:5432/srag
+      SRAG_DATABASE_URL_LEITURA: postgresql+psycopg://srag_leitura:leitura@localhost:5432/srag
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Instala as dependencias
+        run: pip install -e ".[dev]"
+
+      - name: Prepara o banco
+        # O compose aplica este script pelo docker-entrypoint-initdb.d, que nao roda em
+        # service container. Reaproveito o mesmo arquivo para nao ter duas versoes da
+        # criacao do papel somente leitura, que os testes de guardrail dependem.
+        run: psql "postgresql://srag:srag@localhost:5432/srag" -v ON_ERROR_STOP=1 -f docker/init/01_extensoes_papeis.sql
+
+      - name: Lint
+        run: ruff check src tests
+
+      - name: Testes
+        run: pytest -q
